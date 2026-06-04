@@ -1,0 +1,27 @@
+{
+  "name": "tour-planner",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kasunsanjeewa2002sanju/tour-planner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kasunsanjeewa2002sanju/tour-planner/issues"
+  },
+  "homepage": "https://github.com/Kasunsanjeewa2002sanju/tour-planner#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
