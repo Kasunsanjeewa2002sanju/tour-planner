@@ -1,58 +1,83 @@
-import { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { increment, decrement } from './features/counterSlice'
-import axios from 'axios'
-import './App.css'
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchMe } from './features/users/userSlice';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
+import TourGuideDashboard from './pages/TourGuideDashboard';
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+  
+  if (loading) return <div className="auth-container">Loading...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
+};
 
 function App() {
-  const count = useSelector((state) => state.counter.value)
-  const dispatch = useDispatch()
-  const [backendStatus, setBackendStatus] = useState('Checking...')
+  const dispatch = useDispatch();
+  const { isAuthenticated, token } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/')
-        setBackendStatus(response.data)
-      } catch (error) {
-        setBackendStatus('Backend is offline')
-      }
+    if (isAuthenticated && token) {
+      dispatch(fetchMe());
     }
-    checkBackend()
-  }, [])
+  }, [isAuthenticated, token, dispatch]);
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>Tour Planner</h1>
-        <p>Project Scratch Started</p>
-      </header>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
 
-      <main>
-        <section className="status-section">
-          <h2>System Status</h2>
-          <div className="status-card">
-            <p><strong>Frontend:</strong> React + Redux Toolkit</p>
-            <p><strong>Backend:</strong> {backendStatus}</p>
-          </div>
-        </section>
+        <Route 
+          path="/guide/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['tour_guide']}>
+              <TourGuideDashboard />
+            </ProtectedRoute>
+          } 
+        />
 
-        <section className="redux-demo">
-          <h2>Redux Counter Demo</h2>
-          <div className="counter-controls">
-            <button onClick={() => dispatch(decrement())}>-</button>
-            <span className="count-display">{count}</span>
-            <button onClick={() => dispatch(increment())}>+</button>
-          </div>
-        </section>
-      </main>
-
-      <footer>
-        <p>&copy; 2026 Tour Planner</p>
-      </footer>
-    </div>
-  )
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
-
+export default App;

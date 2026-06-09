@@ -5,14 +5,28 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// All admin routes require super_admin role
+// All admin routes require admin or super_admin role
 router.use(authMiddleware);
-router.use(requireRole('super_admin'));
 
-// POST /api/admin/users - create a new admin account
+// Middleware to check if user is at least an admin
+const adminOnly = (req, res, next) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+    next();
+};
+
+router.use(adminOnly);
+
+// POST /api/admin/users - create a new user (role based)
 router.post('/users', async (req, res) => {
     try {
-        const { email, password, phone_number, current_address, country } = req.body;
+        const { email, password, phone_number, current_address, country, role } = req.body;
+
+        // Restriction: Only super_admin can create admins or super_admins
+        if ((role === 'admin' || role === 'super_admin') && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Only super admins can create admin accounts' });
+        }
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -20,47 +34,59 @@ router.post('/users', async (req, res) => {
         }
 
         const password_hash = await bcrypt.hash(password, 10);
-        const adminUser = new User({
+        const newUser = new User({
             email,
             password_hash,
-            role: 'admin',
+            role: role || 'user',
             phone_number,
             current_address,
             country
         });
 
-        await adminUser.save();
-        res.status(201).json({ message: 'Admin created', adminId: adminUser._id });
+        await newUser.save();
+        res.status(201).json({ message: 'User created successfully', userId: newUser._id });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// DELETE /api/admin/users/:id - delete an admin account
+// GET /api/admin/users - list users based on role
+router.get('/users', async (req, res) => {
+    try {
+        let query = {};
+        if (req.user.role === 'admin') {
+            // Admin can only see users and tour guides
+            query = { role: { $in: ['user', 'tour_guide'] } };
+        }
+        // Super admin can see everyone except maybe themselves or just all
+        const users = await User.find(query).select('-password_hash');
+        res.json(users);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// DELETE /api/admin/users/:id
 router.delete('/users/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        if (user.role !== 'admin') {
-            return res.status(400).json({ message: 'Only admin accounts can be deleted here' });
-        }
-        await User.findByIdAndDelete(id);
-        res.json({ message: 'Admin deleted' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
+        const targetUser = await User.findById(id);
+        if (!targetUser) return res.status(404).json({ message: 'User not found' });
 
-// GET /api/admin/users - list all admin accounts
-router.get('/users', async (req, res) => {
-    try {
-        const admins = await User.find({ role: 'admin' }).select('-password_hash');
-        res.json(admins);
+        // Restriction: Only super_admin can delete admins
+        if (targetUser.role === 'admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Only super admins can delete admin accounts' });
+        }
+        
+        // Cannot delete a super_admin unless you are a super_admin (and maybe not yourself)
+        if (targetUser.role === 'super_admin' && req.user.role !== 'super_admin') {
+             return res.status(403).json({ message: 'Cannot delete super admin' });
+        }
+
+        await User.findByIdAndDelete(id);
+        res.json({ message: 'User deleted' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
