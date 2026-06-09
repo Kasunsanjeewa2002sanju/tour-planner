@@ -25,6 +25,11 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/destinations', require('./DestinationManagement/routes/destinations'));
+
+// Service static files (images)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
     res.send('Tour Planner API is running...');
@@ -33,4 +38,3 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-

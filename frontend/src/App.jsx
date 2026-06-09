@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 import TourGuideDashboard from './pages/TourGuideDashboard';
+import DestinationsPage from './pages/DestinationManagement/DestinationsPage';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
@@ -63,6 +64,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/destinations" 
+          element={
+            <ProtectedRoute>
+              <DestinationsPage />
             </ProtectedRoute>
           } 
         />
