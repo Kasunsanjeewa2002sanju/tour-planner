@@ -63,6 +63,7 @@ const LoginPage = () => {
             onChange={onChange}
             placeholder="••••••••"
             required
+            showPasswordToggle
             error={error}
           />
           
