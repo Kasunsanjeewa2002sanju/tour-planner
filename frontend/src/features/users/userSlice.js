@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/api';
+import { restoreSession } from '../auth/authSlice';
 
 export const fetchMe = createAsyncThunk('user/fetchMe', async (_, { rejectWithValue }) => {
   try {
@@ -71,6 +72,11 @@ const userSlice = createSlice({
       })
       .addCase(updatePreferences.fulfilled, (state, action) => {
         state.preferences = action.payload;
+      })
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        if (action.payload?.profile) {
+          state.profile = action.payload.profile;
+        }
       });
   },
 });

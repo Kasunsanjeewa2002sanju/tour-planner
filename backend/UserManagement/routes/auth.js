@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { JWT_EXPIRES_IN } = require('../constants/auth');
 
 const router = express.Router();
 
@@ -56,10 +57,14 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: JWT_EXPIRES_IN }
         );
 
-        res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+        res.json({
+            token,
+            expiresIn: JWT_EXPIRES_IN,
+            user: { id: user._id, email: user.email, role: user.role },
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

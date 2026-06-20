@@ -26,6 +26,22 @@ export function weatherCodeToLabel(code) {
   return WMO_CODES[code] || 'Unknown';
 }
 
+export function weatherCodeToIconType(code) {
+  if (code === 0 || code === 1) return 'sunny';
+  if (code === 2 || code === 3) return 'cloudy';
+  if (code === 45 || code === 48) return 'foggy';
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return 'rainy';
+  if ([71, 73, 75].includes(code)) return 'snowy';
+  if ([95, 96, 99].includes(code)) return 'stormy';
+  return 'cloudy';
+}
+
+const RAINY_CODES = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+
+export function isRainyWeather(code) {
+  return RAINY_CODES.includes(code);
+}
+
 export async function fetchCurrentWeather(lat, lng) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
   const response = await fetch(url);

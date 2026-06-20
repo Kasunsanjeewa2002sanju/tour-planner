@@ -9,15 +9,19 @@ import {
   Route,
   Shield,
   Navigation,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { logout } from '../../features/auth/authSlice';
 import { clearDestinations } from '../../features/destination-management/destinationSlice';
+import { toggleTheme } from '../../features/theme/themeSlice';
 
 const AppNavbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
+  const { mode } = useSelector((state) => state.theme);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -48,6 +52,14 @@ const AppNavbar = () => {
         </div>
 
         <div className="app-navbar-right">
+          <button 
+            type="button" 
+            onClick={() => dispatch(toggleTheme())} 
+            className="theme-toggle-btn" 
+            aria-label="Toggle Theme"
+          >
+            {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <div className="app-navbar-user">
             <p className="app-navbar-user-name">{user?.email?.split('@')[0]}</p>
             <p className="app-navbar-user-role">{user?.role}</p>
@@ -81,14 +93,14 @@ function getNavItems(role) {
 
   if (role === 'tour_guide') {
     return [
-      { to: '/guide/dashboard', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+      { to: '/guide/dashboard', label: 'Home', icon: <LayoutDashboard size={18} /> },
       { to: '/destinations', label: 'Destinations', icon: <MapIcon size={18} /> },
       { to: '/profile', label: 'Profile', icon: <Settings size={18} /> },
     ];
   }
 
   return [
-    { to: '/dashboard', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+    { to: '/dashboard', label: 'Home', icon: <LayoutDashboard size={18} /> },
     { to: '/destinations', label: 'Explore', icon: <MapIcon size={18} /> },
     { to: '/plan-tour', label: 'Plan Tour', icon: <Route size={18} /> },
     { to: '/profile', label: 'Profile', icon: <Settings size={18} /> },

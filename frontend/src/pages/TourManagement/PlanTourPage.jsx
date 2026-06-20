@@ -5,7 +5,10 @@ import { motion } from 'framer-motion';
 import { AlertCircle, Settings } from 'lucide-react';
 import { fetchPreferences } from '../../features/users/userSlice';
 import { fetchFuelPrices } from '../../features/tour-planning/fuelSlice';
+import { fetchDestinations } from '../../features/destination-management/destinationSlice';
 import LocationInput from '../../components/tour-planning/LocationInput';
+import LocationWeatherCard from '../../components/tour-planning/LocationWeatherCard';
+import RouteAttractionsPanel from '../../components/tour-planning/RouteAttractionsPanel';
 import MapPicker from '../../components/tour-planning/MapPicker';
 import CostDashboard from '../../components/tour-planning/CostDashboard';
 import {
@@ -26,6 +29,7 @@ const PlanTourPage = () => {
 
   const { preferences } = useSelector((state) => state.user);
   const { prices: fuelPrices } = useSelector((state) => state.fuel);
+  const { items: destinations } = useSelector((state) => state.destinations);
 
   const [currentText, setCurrentText] = useState('');
   const [destinationText, setDestinationText] = useState('');
@@ -42,6 +46,8 @@ const PlanTourPage = () => {
   const [efficiencyOverride, setEfficiencyOverride] = useState(false);
   const [destinationLoading, setDestinationLoading] = useState(false);
   const [costResult, setCostResult] = useState(null);
+  const [routePlaces, setRoutePlaces] = useState([]);
+  const [placesLoading, setPlacesLoading] = useState(false);
 
   const vehicleReady = isVehicleSetupComplete(preferences);
   const distanceUnit = preferences?.preferred_distance_unit || 'km';
@@ -49,6 +55,7 @@ const PlanTourPage = () => {
   useEffect(() => {
     dispatch(fetchPreferences());
     dispatch(fetchFuelPrices());
+    dispatch(fetchDestinations());
   }, [dispatch]);
 
   useEffect(() => {
@@ -176,11 +183,26 @@ const PlanTourPage = () => {
         const routeRes = await fetch(routeUrl);
         const routeData = await routeRes.json();
         if (routeData.routes?.[0]?.geometry?.coordinates) {
-          setRouteCoords(routeData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+          const coords = routeData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+          setRouteCoords(coords);
+          
+          // Fetch route attractions here
+          setPlacesLoading(true);
+          try {
+            const { fetchRouteAttractions } = await import('../../utils/attractionsUtils');
+            const places = await fetchRouteAttractions(coords, destinations);
+            setRoutePlaces(places);
+          } catch (err) {
+            console.error('Failed to fetch attractions:', err);
+            setRoutePlaces([]);
+          } finally {
+            setPlacesLoading(false);
+          }
         }
       } catch {
         setDistance(null);
         setRouteCoords([]);
+        setRoutePlaces([]);
       } finally {
         setDistanceLoading(false);
       }
@@ -216,6 +238,15 @@ const PlanTourPage = () => {
       ? currentLocation
       : { lat: 7.8731, lng: 80.7718 };
 
+  const effectiveRouteCoords = routeCoords.length >= 2
+    ? routeCoords
+    : currentLocation?.lat && destination?.lat
+      ? [
+          [currentLocation.lat, currentLocation.lng],
+          [destination.lat, destination.lng],
+        ]
+      : [];
+
   if (!vehicleReady) {
     return (
       <div className="plan-tour-page plan-tour-page-in-layout">
@@ -243,30 +274,45 @@ const PlanTourPage = () => {
           <p>Calculate route distance and estimated fuel costs for your journey.</p>
         </header>
 
-        <div className="plan-tour-layout">
+        <div className="plan-tour-layout-container">
           <motion.section
-            className="plan-input-panel glass-card"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            className="plan-input-panel glass-card wide-panel"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
             <h2>Route Details</h2>
+            <div className="plan-route-grid">
+              <div className="plan-route-column">
+                <LocationInput
+                  label="Current Location"
+                  value={currentText}
+                  onChange={setCurrentText}
+                  onSelectOnMap={() => setMapMode('current')}
+                  onUseCurrentLocation={handleUseCurrentLocation}
+                  loadingGeo={geoLoading}
+                />
+                <LocationWeatherCard
+                  location={currentLocation}
+                  title="Current Location Weather"
+                  variant="start"
+                />
+              </div>
 
-            <LocationInput
-              label="Current Location"
-              value={currentText}
-              onChange={setCurrentText}
-              onSelectOnMap={() => setMapMode('current')}
-              onUseCurrentLocation={handleUseCurrentLocation}
-              loadingGeo={geoLoading}
-            />
-
-            <LocationInput
-              label="Destination / Want to Go"
-              value={destinationText}
-              onChange={setDestinationText}
-              onSelectOnMap={() => setMapMode('destination')}
-              placeholder={destinationLoading ? 'Loading destination...' : 'Enter destination address'}
-            />
+              <div className="plan-route-column">
+                <LocationInput
+                  label="Destination / Want to Go"
+                  value={destinationText}
+                  onChange={setDestinationText}
+                  onSelectOnMap={() => setMapMode('destination')}
+                  placeholder={destinationLoading ? 'Loading destination...' : 'Enter destination address'}
+                />
+                <LocationWeatherCard
+                  location={destination}
+                  title="Destination Weather"
+                  variant="end"
+                />
+              </div>
+            </div>
 
             {mapMode && (
               <div className="map-mode-panel">
@@ -315,48 +361,63 @@ const PlanTourPage = () => {
 
           <motion.section
             className="plan-summary-panel"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            {distanceLoading ? (
-              <div className="distance-banner distance-loading">
-                <div className="skeleton-line skeleton-distance" />
-                <p>Calculating route distance...</p>
-              </div>
-            ) : distance ? (
-              <div className="distance-banner">
-                <span className="distance-label">Total Travel Distance</span>
-                <strong className="distance-value">
-                  {distanceUnit === 'miles' ? distance.distanceMiles : distance.distanceKm}
-                  {' '}{distanceUnit === 'miles' ? 'miles' : 'km'}
-                </strong>
-              </div>
-            ) : null}
+            <div className="summary-top-row">
+              {distanceLoading ? (
+                <div className="distance-banner distance-loading">
+                  <div className="skeleton-line skeleton-distance" />
+                  <p>Calculating route distance...</p>
+                </div>
+              ) : distance ? (
+                <div className="distance-banner">
+                  <span className="distance-label">Total Travel Distance</span>
+                  <strong className="distance-value">
+                    {distanceUnit === 'miles' ? distance.distanceMiles : distance.distanceKm}
+                    {' '}{distanceUnit === 'miles' ? 'miles' : 'km'}
+                  </strong>
+                </div>
+              ) : null}
 
-            <CostDashboard
-              distance={distance}
-              distanceUnit={distanceUnit}
-              vehicleType={vehicleType}
-              onVehicleChange={handleVehicleChange}
-              fuelRequired={costResult?.fuelRequired}
-              totalCost={costResult?.totalCost}
-              currency={costResult?.currency}
-              fuelType={fuelType}
-              loading={distanceLoading}
-            />
-
-            {!mapMode && currentLocation?.lat && destination?.lat && (
-              <div className="route-map-preview">
-                <h3>Route Preview</h3>
-                <MapPicker
-                  center={mapCenter}
-                  marker={destination}
-                  routeCoords={routeCoords}
-                  onSelect={() => {}}
-                  height="280px"
+              {costResult && (
+                <CostDashboard
+                  distance={distance}
+                  distanceUnit={distanceUnit}
+                  vehicleType={vehicleType}
+                  onVehicleChange={handleVehicleChange}
+                  fuelRequired={costResult?.fuelRequired}
+                  totalCost={costResult?.totalCost}
+                  currency={costResult?.currency}
+                  fuelType={fuelType}
+                  loading={distanceLoading}
                 />
-              </div>
-            )}
+              )}
+            </div>
+
+            <div className="plan-preview-section">
+              {!mapMode && currentLocation?.lat && destination?.lat && (
+                <div className="route-map-preview">
+                  <h3>Route Preview</h3>
+                  <MapPicker
+                    center={mapCenter}
+                    marker={destination}
+                    routeCoords={routeCoords}
+                    attractionMarkers={routePlaces}
+                    onSelect={() => {}}
+                    height="400px"
+                  />
+                </div>
+              )}
+
+              {currentLocation?.lat && destination?.lat && (
+                <RouteAttractionsPanel
+                  places={routePlaces}
+                  loading={placesLoading}
+                  loadingRoute={distanceLoading && routeCoords.length < 2}
+                />
+              )}
+            </div>
           </motion.section>
         </div>
       </div>

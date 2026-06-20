@@ -1,9 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Map as MapIcon, ChevronRight, Heart } from 'lucide-react';
 import { fetchDestinations, toggleBookmark } from '../features/destination-management/destinationSlice';
 import InsightStatCards from '../components/dashboard/InsightStatCards';
+import { useShuffledList } from '../hooks/useShuffledList';
+
+const SHUFFLE_INTERVAL_MS = 60000;
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
@@ -13,11 +16,16 @@ const DashboardPage = () => {
     dispatch(fetchDestinations());
   }, [dispatch]);
 
+  const shuffledDestinations = useShuffledList(destinations, SHUFFLE_INTERVAL_MS);
+  const displayDestinations = useMemo(
+    () => shuffledDestinations.slice(0, 10),
+    [shuffledDestinations]
+  );
+
   const handleBookmark = (id) => {
     dispatch(toggleBookmark(id));
   };
 
-  const recentDestinations = destinations.slice(0, 10);
   const savedCount = destinations.filter((d) => d.isBookmarked).length;
 
   return (
@@ -42,7 +50,7 @@ const DashboardPage = () => {
 
       <section>
         <div className="dashboard-section-header">
-          <h2>Recently Added Paradises</h2>
+          <h2>Discover Paradises</h2>
           <Link to="/destinations" className="dashboard-view-more">
             View More <ChevronRight size={18} />
           </Link>
@@ -52,7 +60,7 @@ const DashboardPage = () => {
           <div className="dashboard-loading">Loading masterpieces...</div>
         ) : (
           <div className="dashboard-destinations-grid">
-            {recentDestinations.map((dest) => (
+            {displayDestinations.map((dest) => (
               <CompactDestinationCard key={dest._id} destination={dest} onBookmark={handleBookmark} />
             ))}
           </div>

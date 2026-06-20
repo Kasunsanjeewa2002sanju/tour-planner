@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, Polyline, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { reverseGeocode } from '../../features/tour-planning/tourUtils';
@@ -12,6 +12,14 @@ const defaultIcon = L.icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
+});
+
+const attractionIcon = L.divIcon({
+  className: 'custom-attraction-marker',
+  html: `<div style="background: #f59e0b; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 8px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+  popupAnchor: [0, -7],
 });
 
 function MapClickHandler({ onSelect }) {
@@ -39,6 +47,7 @@ const MapPicker = ({
   center = { lat: 7.8731, lng: 80.7718 },
   marker,
   routeCoords = [],
+  attractionMarkers = [],
   onSelect,
   height = '400px',
 }) => {
@@ -72,6 +81,20 @@ const MapPicker = ({
         {routeCoords.length > 1 && (
           <Polyline positions={routeCoords} color="#6366f1" weight={4} opacity={0.8} />
         )}
+        {attractionMarkers.map((place, idx) => (
+          <Marker 
+            key={`${place.name}-${idx}`} 
+            position={[place.lat, place.lng]} 
+            icon={attractionIcon}
+          >
+            <Popup>
+              <div style={{ padding: '0.25rem' }}>
+                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{place.name}</strong>
+                <span style={{ fontSize: '0.75rem', color: '#666' }}>{place.typeLabel}</span>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

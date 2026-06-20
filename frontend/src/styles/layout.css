@@ -2,19 +2,20 @@
 /* App shell & navbar */
 .app-shell {
   min-height: 100vh;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 .app-shell-content {
   min-height: calc(100vh - 72px);
+  background-color: var(--bg-main);
 }
 
 .app-navbar {
   height: 72px;
-  background: rgba(30, 41, 59, 0.92);
+  background: var(--glass);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 200;
@@ -57,7 +58,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
@@ -105,10 +106,30 @@
   font-weight: 700;
 }
 
+.theme-toggle-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--glass);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 .app-navbar-logout {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
@@ -116,7 +137,7 @@
 }
 
 .app-navbar-logout:hover {
-  color: #f8fafc;
+  color: var(--error);
 }
 
 @media (max-width: 900px) {
@@ -141,6 +162,11 @@
   }
 }
 
+[data-theme='light'] .app-navbar {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 /* Dashboard insight stat cards */
 .insight-stat-grid {
   display: grid;
@@ -150,10 +176,15 @@
 
 .insight-stat-card {
   padding: 1.75rem;
-  background: #1e293b;
+  background: var(--bg-card);
   border-radius: 1rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   min-height: 160px;
+  transition: all 0.3s ease;
+}
+
+[data-theme='light'] .insight-stat-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .insight-stat-header {
@@ -165,7 +196,7 @@
 
 .insight-stat-title {
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -210,7 +241,7 @@
 
 .fuel-price-row strong {
   font-size: 1.35rem;
-  color: #f8fafc;
+  color: var(--text-main);
 }
 
 .weather-main {
@@ -231,7 +262,7 @@
 }
 
 .insight-stat-location {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.8rem;
   margin: 0 0 0.75rem 0;
 }
@@ -245,13 +276,18 @@
 
 .dashboard-stat-saved {
   padding: 2rem;
-  background: #1e293b;
+  background: var(--bg-card);
   border-radius: 1rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+[data-theme='light'] .dashboard-stat-saved {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .dashboard-stat-saved p {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
 }
@@ -259,6 +295,7 @@
 .dashboard-stat-saved h2 {
   font-size: 2.5rem;
   margin: 0;
+  color: var(--text-main);
 }
 
 .dashboard-stat-saved span {
@@ -336,10 +373,10 @@
 }
 
 .compact-card-styled {
-  background: #1e293b;
+  background: var(--bg-card);
   border-radius: 1.5rem;
   overflow: hidden;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   transition: transform 0.3s ease;
 }
 

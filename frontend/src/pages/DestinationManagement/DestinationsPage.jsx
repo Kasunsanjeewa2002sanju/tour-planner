@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Route } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchDestinations, addDestination, updateDestination, deleteDestination, toggleBookmark, fetchSavedDestinations } from '../../features/destination-management/destinationSlice';
+import { useShuffledList } from '../../hooks/useShuffledList';
+
+const SHUFFLE_INTERVAL_MS = 60000;
 
 // --- Sub-components ---
 
@@ -388,7 +391,7 @@ const DestinationsPage = () => {
   const { user } = useSelector((state) => state.auth);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredDestinations, setFilteredDestinations] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -411,12 +414,15 @@ const DestinationsPage = () => {
 
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-    const filtered = destinations.filter(dest => 
-      dest.name.toLowerCase().includes(term) || 
+    const filtered = destinations.filter(dest =>
+      dest.name.toLowerCase().includes(term) ||
       dest.location.toLowerCase().includes(term)
     );
-    setFilteredDestinations(filtered);
+    setSearchResults(filtered);
   }, [searchTerm, destinations]);
+
+  const shuffledDestinations = useShuffledList(searchResults, SHUFFLE_INTERVAL_MS);
+  const filteredDestinations = searchTerm.trim() ? searchResults : shuffledDestinations;
 
   const handleBookmark = (id) => {
     dispatch(toggleBookmark(id));

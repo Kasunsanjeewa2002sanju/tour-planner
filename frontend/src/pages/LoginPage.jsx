@@ -10,9 +10,11 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user, authInitialized } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    if (!authInitialized) return;
+
     if (isAuthenticated && user) {
       if (user.role === 'admin' || user.role === 'super_admin') {
         navigate('/admin/dashboard');
@@ -25,7 +27,7 @@ const LoginPage = () => {
     return () => {
       dispatch(clearError());
     };
-  }, [isAuthenticated, user, navigate, dispatch]);
+  }, [authInitialized, isAuthenticated, user, navigate, dispatch]);
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
