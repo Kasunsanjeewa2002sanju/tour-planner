@@ -1,25 +1,16 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../features/auth/authSlice';
-import { useNavigate, Link } from 'react-router-dom';
-import { User, LogOut, LayoutDashboard, Calendar, Navigation, Star, MapIcon, ChevronRight, Bell, Search, Settings } from 'lucide-react';
-import { clearDestinations } from '../features/destination-management/destinationSlice';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { User, LayoutDashboard, Calendar, Navigation, Star, MapIcon, ChevronRight, Bell, Search, Settings } from 'lucide-react';
 
 const TourGuideDashboard = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(clearDestinations());
-    navigate('/');
-  };
-
   return (
-    <div className="admin-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc' }}>
-      {/* High-End Modern Sidebar */}
-      <aside style={{ 
+    <div className="admin-layout admin-with-navbar" style={{ display: 'flex', minHeight: 'calc(100vh - 72px)', backgroundColor: '#020617', color: '#f8fafc' }}>
+      <aside
+        className="admin-sidebar"
+        style={{
         width: '280px', 
         backgroundColor: '#0f172a', 
         borderRight: '1px solid #1e293b', 
@@ -27,7 +18,8 @@ const TourGuideDashboard = () => {
         flexDirection: 'column',
         padding: '2rem 1.5rem',
         position: 'fixed',
-        height: '100vh',
+        top: '72px',
+        height: 'calc(100vh - 72px)',
         zIndex: 50
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3.5rem', padding: '0 0.5rem' }}>
@@ -46,7 +38,7 @@ const TourGuideDashboard = () => {
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid #1e293b', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#064e3b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#34d399' }}>
                 {user?.email?.[0].toUpperCase()}
             </div>
@@ -55,26 +47,10 @@ const TourGuideDashboard = () => {
                 <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Expert Tour Guide</p>
             </div>
           </div>
-          <button onClick={handleLogout} style={{ 
-            width: '100%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.75rem', 
-            padding: '0.75rem 1rem', 
-            color: '#94a3b8', 
-            background: 'rgba(239, 68, 68, 0.05)', 
-            border: '1px solid rgba(239, 68, 68, 0.1)', 
-            borderRadius: '0.75rem',
-            cursor: 'pointer'
-          }}>
-            <LogOut size={18} /> Logout
-          </button>
         </div>
       </aside>
 
-      {/* Content Area */}
-      <main style={{ flex: 1, marginLeft: '280px', padding: '0 3rem 3rem 3rem' }}>
-        {/* Top Header */}
+      <main className="admin-main" style={{ flex: 1, marginLeft: '280px', padding: '0 3rem 3rem 3rem' }}>
         <header style={{ 
           height: '100px', 
           display: 'flex', 
@@ -83,7 +59,7 @@ const TourGuideDashboard = () => {
           borderBottom: '1px solid #1e293b',
           marginBottom: '3rem',
           position: 'sticky',
-          top: 0,
+          top: '72px',
           backgroundColor: 'rgba(2, 6, 23, 0.8)',
           backdropFilter: 'blur(8px)',
           zIndex: 40

@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../features/auth/authSlice';
 import { fetchAllUsers, createUserByAdmin, deleteUserByAdmin, clearAdminError } from '../features/admin/adminSlice';
-import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, LogOut, LayoutDashboard, Users, Shield, Trash2, MapPin, MapIcon, Search, ChevronRight, Bell } from 'lucide-react';
-import { clearDestinations } from '../features/destination-management/destinationSlice';
+import { Link } from 'react-router-dom';
+import { UserPlus, LayoutDashboard, Users, Shield, Trash2, MapPin, Search, ChevronRight, Bell, Fuel } from 'lucide-react';
+import { fetchAdminFuelPrices, updateFuelPrices } from '../features/tour-planning/fuelSlice';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { users, loading, error } = useSelector((state) => state.admin);
+  const { prices: fuelPrices, saving: fuelSaving, error: fuelError } = useSelector((state) => state.fuel);
 
+  const [activeView, setActiveView] = useState('users');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [fuelForm, setFuelForm] = useState({ petrol_price: '', diesel_price: '', currency: 'USD' });
+  const [fuelFormError, setFuelFormError] = useState(null);
+  const [fuelSaveSuccess, setFuelSaveSuccess] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,13 +30,18 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     dispatch(fetchAllUsers());
+    dispatch(fetchAdminFuelPrices());
   }, [dispatch]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(clearDestinations());
-    navigate('/');
-  };
+  useEffect(() => {
+    if (fuelPrices) {
+      setFuelForm({
+        petrol_price: fuelPrices.petrol_price ?? '',
+        diesel_price: fuelPrices.diesel_price ?? '',
+        currency: fuelPrices.currency || 'USD',
+      });
+    }
+  }, [fuelPrices]);
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -53,12 +61,49 @@ const AdminDashboard = () => {
     }
   };
 
+  const onFuelChange = (e) => {
+    setFuelForm({ ...fuelForm, [e.target.name]: e.target.value });
+    setFuelFormError(null);
+    setFuelSaveSuccess(false);
+  };
+
+  const onFuelSubmit = async (e) => {
+    e.preventDefault();
+    setFuelFormError(null);
+    setFuelSaveSuccess(false);
+
+    const petrol = parseFloat(String(fuelForm.petrol_price).trim());
+    const diesel = parseFloat(String(fuelForm.diesel_price).trim());
+
+    if (!Number.isFinite(petrol) || petrol < 0) {
+      setFuelFormError('Please enter a valid petrol price (e.g. 355)');
+      return;
+    }
+    if (!Number.isFinite(diesel) || diesel < 0) {
+      setFuelFormError('Please enter a valid diesel price (e.g. 285)');
+      return;
+    }
+
+    const result = await dispatch(updateFuelPrices({
+      petrol_price: petrol,
+      diesel_price: diesel,
+      currency: fuelForm.currency,
+    }));
+
+    if (updateFuelPrices.fulfilled.match(result)) {
+      setFuelSaveSuccess(true);
+    } else {
+      setFuelFormError(result.payload?.message || fuelError || 'Failed to update fuel prices');
+    }
+  };
+
   const isSuperAdmin = user?.role === 'super_admin';
 
   return (
-    <div className="admin-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#020617', color: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
-      {/* High-End Modern Sidebar */}
-      <aside style={{ 
+    <div className="admin-layout admin-with-navbar" style={{ display: 'flex', minHeight: 'calc(100vh - 72px)', backgroundColor: '#020617', color: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
+      <aside
+        className="admin-sidebar"
+        style={{
         width: '280px', 
         backgroundColor: '#0f172a', 
         borderRight: '1px solid #1e293b', 
@@ -66,7 +111,8 @@ const AdminDashboard = () => {
         flexDirection: 'column',
         padding: '2rem 1.5rem',
         position: 'fixed',
-        height: '100vh',
+        top: '72px',
+        height: 'calc(100vh - 72px)',
         zIndex: 50
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3.5rem', padding: '0 0.5rem' }}>
@@ -77,15 +123,16 @@ const AdminDashboard = () => {
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <SidebarLink icon={<LayoutDashboard size={20} />} label="Overview" active />
-          <SidebarLink icon={<Users size={20} />} label="Manage Users" />
+          <SidebarLink icon={<LayoutDashboard size={20} />} label="Overview" active={activeView === 'users'} onClick={() => setActiveView('users')} />
+          <SidebarLink icon={<Users size={20} />} label="Manage Users" active={activeView === 'users'} onClick={() => setActiveView('users')} />
+          <SidebarLink icon={<Fuel size={20} />} label="Fuel Price Settings" active={activeView === 'fuel'} onClick={() => setActiveView('fuel')} />
           <SidebarLink icon={<MapPin size={20} />} label="Destinations" to="/destinations" />
           <SidebarLink icon={<Shield size={20} />} label="Security" />
           <SidebarLink icon={<Bell size={20} />} label="Notifications" />
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid #1e293b', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                 {user?.email?.[0].toUpperCase()}
             </div>
@@ -94,26 +141,10 @@ const AdminDashboard = () => {
                 <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textTransform: 'capitalize' }}>{user?.role}</p>
             </div>
           </div>
-          <button onClick={handleLogout} style={{ 
-            width: '100%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.75rem', 
-            padding: '0.75rem 1rem', 
-            color: '#94a3b8', 
-            background: 'rgba(239, 68, 68, 0.05)', 
-            border: '1px solid rgba(239, 68, 68, 0.1)', 
-            borderRadius: '0.75rem',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}>
-            <LogOut size={18} /> Logout
-          </button>
         </div>
       </aside>
 
-      {/* Content Area */}
-      <main style={{ flex: 1, marginLeft: '280px', padding: '0 3rem 3rem 3rem' }}>
+      <main className="admin-main" style={{ flex: 1, marginLeft: '280px', padding: '0 3rem 3rem 3rem' }}>
         {/* Top Header */}
         <header style={{ 
           height: '100px', 
@@ -123,7 +154,7 @@ const AdminDashboard = () => {
           borderBottom: '1px solid #1e293b',
           marginBottom: '3rem',
           position: 'sticky',
-          top: 0,
+          top: '72px',
           backgroundColor: 'rgba(2, 6, 23, 0.8)',
           backdropFilter: 'blur(8px)',
           zIndex: 40
@@ -136,12 +167,13 @@ const AdminDashboard = () => {
               style={{ background: 'none', border: 'none', color: 'white', flex: 1, outline: 'none', fontSize: '0.9rem' }}
             />
           </div>
-          <Button onClick={() => setShowAddModal(true)} style={{ width: 'auto', padding: '0.75rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, #6366f1, #a855f7)', border: 'none' }}>
+          <Button onClick={() => setShowAddModal(true)} style={{ width: 'auto', padding: '0.75rem 1.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, #6366f1, #a855f7)', border: 'none', display: activeView === 'users' ? 'flex' : 'none' }}>
             <UserPlus size={18} /> <span style={{ marginLeft: '0.5rem' }}>Create New User</span>
           </Button>
         </header>
 
-        {/* Dashboard Content */}
+        {activeView === 'users' ? (
+        <>
         <section style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>User Management</h1>
             <p style={{ color: '#64748b' }}>Manage and monitor all platform accounts from one place.</p>
@@ -189,6 +221,56 @@ const AdminDashboard = () => {
           </table>
           {users.length === 0 && <div style={{ padding: '6rem', textAlign: 'center', color: '#64748b' }}>No verified users found in the database.</div>}
         </section>
+        </>
+        ) : (
+        <>
+        <section style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>Fuel Price Settings</h1>
+          <p style={{ color: '#64748b' }}>Set global petrol and diesel prices used for trip cost calculations.</p>
+        </section>
+
+        <section style={{ backgroundColor: '#0f172a', borderRadius: '2rem', border: '1px solid #1e293b', padding: '2.5rem', maxWidth: '560px' }}>
+          <form onSubmit={onFuelSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <Input
+              label="Petrol Price (per Liter)"
+              name="petrol_price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={fuelForm.petrol_price}
+              onChange={onFuelChange}
+              required
+            />
+            <Input
+              label="Diesel Price (per Liter)"
+              name="diesel_price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={fuelForm.diesel_price}
+              onChange={onFuelChange}
+              required
+            />
+            <div>
+              <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: '0.5rem' }}>Currency</label>
+              <select name="currency" value={fuelForm.currency} onChange={onFuelChange} style={selectStyle}>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="LKR">LKR (Rs)</option>
+              </select>
+            </div>
+            <Button type="submit" loading={fuelSaving}>Save Fuel Prices</Button>
+            {fuelSaveSuccess && (
+              <p style={{ color: '#34d399', fontSize: '0.9rem' }}>Fuel prices updated successfully.</p>
+            )}
+            {(fuelFormError || fuelError) && (
+              <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{fuelFormError || fuelError}</p>
+            )}
+          </form>
+        </section>
+        </>
+        )}
       </main>
 
       {/* Add User Modal */}
@@ -232,28 +314,36 @@ const AdminDashboard = () => {
   );
 };
 
-const SidebarLink = ({ icon, label, active, to }) => (
-  <Link 
-    to={to || '#'} 
-    style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '0.85rem', 
-      padding: '0.85rem 1rem', 
-      borderRadius: '0.75rem',
-      backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-      color: active ? '#818cf8' : '#94a3b8',
-      textDecoration: 'none',
-      fontWeight: 600,
-      fontSize: '0.9rem',
-      transition: 'all 0.2s',
-      border: active ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent'
-    }}
-  >
-    {icon} <span>{label}</span>
-    {active && <ChevronRight size={14} style={{ marginLeft: 'auto' }} />}
-  </Link>
-);
+const SidebarLink = ({ icon, label, active, to, onClick }) => {
+  const style = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.85rem',
+    padding: '0.85rem 1rem',
+    borderRadius: '0.75rem',
+    backgroundColor: active ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+    color: active ? '#818cf8' : '#94a3b8',
+    textDecoration: 'none',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    transition: 'all 0.2s',
+    border: active ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+    cursor: 'pointer',
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+
+  if (to) {
+    return <Link to={to} style={style}>{icon} <span>{label}</span></Link>;
+  }
+
+  return (
+    <button type="button" onClick={onClick} style={{ ...style, background: style.backgroundColor, border: style.border }}>
+      {icon} <span>{label}</span>
+      {active && <ChevronRight size={14} style={{ marginLeft: 'auto' }} />}
+    </button>
+  );
+};
 
 const modalOverlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(2, 6, 23, 0.9)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' };
 const selectStyle = { width: '100%', padding: '1rem', borderRadius: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', color: '#f8fafc', border: '1px solid #1e293b', cursor: 'pointer', outline: 'none' };

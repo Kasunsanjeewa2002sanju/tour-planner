@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { VEHICLE_TYPES, FUEL_TYPES } = require('../../TourManagement/constants/vehicleDefaults');
 
 const userPreferenceSchema = new mongoose.Schema({
     user_id: {
@@ -17,6 +18,22 @@ const userPreferenceSchema = new mongoose.Schema({
         enum: ['km', 'miles'],
         default: 'km'
     },
+    vehicle_type: {
+        type: String,
+        enum: [...VEHICLE_TYPES, null],
+        default: null
+    },
+    fuel_efficiency: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    fuel_type: {
+        type: String,
+        enum: [...FUEL_TYPES, null],
+        default: null
+    },
+    // Legacy field kept for backward compatibility
     current_vehicle_type: {
         type: String,
         trim: true
@@ -24,5 +41,17 @@ const userPreferenceSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+userPreferenceSchema.virtual('vehicle_setup_complete').get(function () {
+    return Boolean(
+        this.vehicle_type &&
+        this.fuel_efficiency != null &&
+        this.fuel_efficiency > 0 &&
+        this.fuel_type
+    );
+});
+
+userPreferenceSchema.set('toJSON', { virtuals: true });
+userPreferenceSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('UserPreference', userPreferenceSchema);

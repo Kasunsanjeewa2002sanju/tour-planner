@@ -26,6 +26,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/destinations', require('./DestinationManagement/routes/destinations'));
+app.use('/api/fuel', require('./TourManagement/routes/fuel'));
+app.use('/api/vehicles', require('./TourManagement/routes/vehicles'));
 
 // Service static files (images)
 const path = require('path');
