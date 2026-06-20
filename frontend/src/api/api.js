@@ -7,7 +7,12 @@ const api = axios.create({
   },
 });
 
-// Add a request interceptor
+let unauthorizedHandler = null;
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -16,18 +21,21 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add a response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    if (error.response?.status === 401) {
+      const url = error.config?.url || '';
+      const isLoginRequest = url.includes('/auth/login');
+      const isRegisterRequest = url.includes('/auth/register');
+      const skipLogout = error.config?._skipAuthLogout;
+
+      if (!isLoginRequest && !isRegisterRequest && !skipLogout && unauthorizedHandler) {
+        unauthorizedHandler(error);
+      }
     }
     return Promise.reject(error);
   }

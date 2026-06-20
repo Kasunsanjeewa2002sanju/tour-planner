@@ -69,16 +69,26 @@ router.get('/me/preferences', async (req, res) => {
 // PATCH /api/users/me/preferences
 router.patch('/me/preferences', async (req, res) => {
     try {
-        const { default_start_location, preferred_distance_unit, current_vehicle_type } = req.body;
+        const {
+            default_start_location,
+            preferred_distance_unit,
+            current_vehicle_type,
+            vehicle_type,
+            fuel_efficiency,
+            fuel_type
+        } = req.body;
 
         let prefs = await UserPreference.findOne({ user_id: req.user.id });
         if (!prefs) {
             prefs = new UserPreference({ user_id: req.user.id });
         }
 
-        if (default_start_location) prefs.default_start_location = default_start_location;
+        if (default_start_location !== undefined) prefs.default_start_location = default_start_location;
         if (preferred_distance_unit) prefs.preferred_distance_unit = preferred_distance_unit;
         if (current_vehicle_type) prefs.current_vehicle_type = current_vehicle_type;
+        if (vehicle_type !== undefined) prefs.vehicle_type = vehicle_type;
+        if (fuel_efficiency !== undefined) prefs.fuel_efficiency = fuel_efficiency;
+        if (fuel_type !== undefined) prefs.fuel_type = fuel_type;
 
         await prefs.save();
         res.json(prefs);

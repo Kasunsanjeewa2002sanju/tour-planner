@@ -1,0 +1,451 @@
+
+/* App shell & navbar */
+.app-shell {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+.app-shell-content {
+  min-height: calc(100vh - 72px);
+  background-color: var(--bg-main);
+}
+
+.app-navbar {
+  height: 72px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.app-navbar-inner {
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  min-width: 0;
+}
+
+.app-navbar-brand {
+  color: #6366f1;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.app-nav-link:hover,
+.app-nav-link.active {
+  color: #818cf8;
+}
+
+.app-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.app-navbar-user {
+  text-align: right;
+}
+
+.app-navbar-user-name {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.app-navbar-user-role {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+
+.app-navbar-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.theme-toggle-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--glass);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.app-navbar-logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.app-navbar-logout:hover {
+  color: var(--error);
+}
+
+@media (max-width: 900px) {
+  .app-navbar-inner {
+    padding: 0 1rem;
+  }
+
+  .app-navbar-left {
+    gap: 1rem;
+  }
+
+  .app-navbar-links {
+    gap: 0.75rem;
+  }
+
+  .app-nav-link span {
+    display: none;
+  }
+
+  .app-navbar-user {
+    display: none;
+  }
+}
+
+[data-theme='light'] .app-navbar {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Dashboard insight stat cards */
+.insight-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.insight-stat-card {
+  padding: 1.75rem;
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  min-height: 160px;
+  transition: all 0.3s ease;
+}
+
+[data-theme='light'] .insight-stat-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.insight-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.insight-stat-title {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.insight-stat-icon.fuel-icon {
+  color: #f59e0b;
+}
+
+.insight-stat-icon.weather-icon {
+  color: #38bdf8;
+}
+
+.insight-stat-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0;
+  color: #94a3b8;
+}
+
+.insight-stat-muted {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.fuel-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fuel-price-row:last-child {
+  border-bottom: none;
+}
+
+.fuel-price-row span {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.fuel-price-row strong {
+  font-size: 1.35rem;
+  color: var(--text-main);
+}
+
+.weather-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.weather-temp {
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.weather-condition {
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.insight-stat-location {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.weather-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.dashboard-stat-saved {
+  padding: 2rem;
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+[data-theme='light'] .dashboard-stat-saved {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-stat-saved p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-stat-saved h2 {
+  font-size: 2.5rem;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.dashboard-stat-saved span {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.dashboard-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 5rem;
+}
+
+/* Admin / guide layout with top navbar */
+.admin-with-navbar .admin-sidebar {
+  top: 72px;
+  height: calc(100vh - 72px);
+}
+
+.dashboard-main {
+  padding: 3rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-header p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.dashboard-highlight {
+  color: #6366f1;
+}
+
+.dashboard-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.dashboard-section-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dashboard-view-more {
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dashboard-loading {
+  text-align: center;
+  padding: 5rem;
+  color: #94a3b8;
+}
+
+.dashboard-destinations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.compact-card-styled {
+  background: var(--bg-card);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+
+.compact-card-image-wrap {
+  height: 200px;
+  position: relative;
+}
+
+.compact-card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compact-card-bookmark {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.compact-card-body {
+  padding: 1.25rem;
+}
+
+.compact-card-body h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.compact-card-location {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #6366f1;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.profile-page {
+  padding: 2rem 4rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.profile-page-title {
+  margin-bottom: 2.5rem;
+}
+
+.plan-tour-page-in-layout {
+  padding-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 2rem 1rem;
+  }
+
+  .profile-page {
+    padding: 1.5rem 1rem;
+  }
+}

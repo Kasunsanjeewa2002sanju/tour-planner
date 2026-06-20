@@ -3,6 +3,8 @@ import authReducer from '../features/auth/authSlice';
 import userReducer from '../features/users/userSlice';
 import adminReducer from '../features/admin/adminSlice';
 import destinationReducer from '../features/destination-management/destinationSlice';
+import fuelReducer from '../features/tour-planning/fuelSlice';
+import themeReducer from '../features/theme/themeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +12,7 @@ export const store = configureStore({
     user: userReducer,
     admin: adminReducer,
     destinations: destinationReducer,
+    fuel: fuelReducer,
+    theme: themeReducer,
   },
 });

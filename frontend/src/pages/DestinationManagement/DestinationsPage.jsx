@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Bookmark as BookmarkIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Route } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchDestinations, addDestination, updateDestination, deleteDestination, toggleBookmark, fetchSavedDestinations } from '../../features/destination-management/destinationSlice';
+import { useShuffledList } from '../../hooks/useShuffledList';
+
+const SHUFFLE_INTERVAL_MS = 60000;
 
 // --- Sub-components ---
 
-const DestinationCard = ({ destination, onView, onEdit, onDelete, canManage }) => {
+const DestinationCard = ({ destination, onView, onEdit, onDelete, onBookmark, onPlanTrip, canManage, showPlanTrip }) => {
   return (
     <motion.div 
       className="destination-card"
@@ -32,7 +36,14 @@ const DestinationCard = ({ destination, onView, onEdit, onDelete, canManage }) =
         </div>
         <p className="card-description">{destination.description}</p>
         <div className="card-footer">
-          <button className="btn-view" onClick={() => onView(destination)}>Explore</button>
+          <div className="card-footer-actions">
+            <button className="btn-view" onClick={() => onView(destination)}>Explore</button>
+            {showPlanTrip && (
+              <button className="btn-plan-trip" onClick={() => onPlanTrip(destination)}>
+                <Route size={16} /> Plan Trip
+              </button>
+            )}
+          </div>
           
           <div className="card-actions">
             <button 
@@ -60,7 +71,7 @@ const DestinationCard = ({ destination, onView, onEdit, onDelete, canManage }) =
   );
 };
 
-const DestinationDetail = ({ destination, onClose, onEdit, onDelete, canManage }) => {
+const DestinationDetail = ({ destination, onClose, onEdit, onDelete, onPlanTrip, canManage, showPlanTrip }) => {
   const [currentImg, setCurrentImg] = useState(0);
 
   if (!destination) return null;
@@ -138,6 +149,12 @@ const DestinationDetail = ({ destination, onClose, onEdit, onDelete, canManage }
             <MapPin size={32} />
             <p>Interactive Map Preview for {destination.name}</p>
           </div>
+
+          {showPlanTrip && (
+            <button className="btn-plan-trip btn-plan-trip-large" onClick={() => onPlanTrip(destination)}>
+              <Route size={20} /> Plan Trip to {destination.name}
+            </button>
+          )}
 
           {canManage && (
             <div className="modal-actions">
@@ -369,17 +386,23 @@ const DestinationForm = ({ destination, onClose, onSubmit }) => {
 
 const DestinationsPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items: destinations, loading } = useSelector((state) => state.destinations);
   const { user } = useSelector((state) => state.auth);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredDestinations, setFilteredDestinations] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'saved'
 
   const canManage = user && ['admin', 'super_admin', 'tour_guide'].includes(user.role);
+  const showPlanTrip = user?.role === 'user';
+
+  const handlePlanTrip = (dest) => {
+    navigate(`/plan-tour?destination=${dest._id}`);
+  };
 
   useEffect(() => {
     if (viewMode === 'all') {
@@ -391,12 +414,15 @@ const DestinationsPage = () => {
 
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-    const filtered = destinations.filter(dest => 
-      dest.name.toLowerCase().includes(term) || 
+    const filtered = destinations.filter(dest =>
+      dest.name.toLowerCase().includes(term) ||
       dest.location.toLowerCase().includes(term)
     );
-    setFilteredDestinations(filtered);
+    setSearchResults(filtered);
   }, [searchTerm, destinations]);
+
+  const shuffledDestinations = useShuffledList(searchResults, SHUFFLE_INTERVAL_MS);
+  const filteredDestinations = searchTerm.trim() ? searchResults : shuffledDestinations;
 
   const handleBookmark = (id) => {
     dispatch(toggleBookmark(id));
@@ -493,7 +519,9 @@ const DestinationsPage = () => {
                   onEdit={handleOpenEdit}
                   onDelete={handleDelete}
                   onBookmark={handleBookmark}
+                  onPlanTrip={handlePlanTrip}
                   canManage={canManage}
+                  showPlanTrip={showPlanTrip}
                 />
               ))
             ) : (
@@ -514,7 +542,9 @@ const DestinationsPage = () => {
             onClose={() => setSelectedDestination(null)}
             onEdit={handleOpenEdit}
             onDelete={handleDelete}
+            onPlanTrip={handlePlanTrip}
             canManage={canManage}
+            showPlanTrip={showPlanTrip}
           />
         )}
 

@@ -1,16 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
+  /* Core brand */
   --primary: #6366f1;
   --primary-hover: #4f46e5;
-  --bg-dark: #0f172a;
+  --error: #ef4444;
+  --success: #22c55e;
+
+  /* Dark Mode tokens (default) */
+  --bg-main: #0f172a;
   --bg-card: #1e293b;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border: #334155;
-  --error: #ef4444;
-  --success: #22c55e;
   --glass: rgba(30, 41, 59, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme='light'] {
+  /* High-Contrast Light Mode tokens */
+  --bg-main: #f1f5f9;
+  --bg-card: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #475569;
+  --border: #cbd5e1;
+  --glass: rgba(255, 255, 255, 0.9);
+  --input-bg: #f8fafc;
 }
 
 * {
@@ -21,7 +36,7 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -38,13 +53,17 @@ body {
 
 .glass-card {
   background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   padding: 2.5rem;
   width: 100%;
   max-width: 450px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .glass-card {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -113,10 +132,15 @@ a:hover {
 
 .header-text h1 {
   font-size: 3rem;
-  background: linear-gradient(to right, #fff, #94a3b8);
+  background: linear-gradient(to right, var(--text-main), var(--text-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
+}
+
+[data-theme='light'] .header-text h1 {
+  background: linear-gradient(to right, var(--text-main), var(--primary));
+  -webkit-background-clip: text;
 }
 
 .header-text p {
@@ -138,9 +162,8 @@ a:hover {
 .search-bar input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
-  background: rgba(30, 41, 59, 0.5);
+  background: var(--input-bg);
   border: 1px solid var(--border);
-  border-radius: 1rem;
   color: var(--text-main);
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
@@ -149,7 +172,7 @@ a:hover {
 .search-bar input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-  background: rgba(30, 41, 59, 0.8);
+  background: var(--bg-card);
 }
 
 .search-icon {
@@ -183,7 +206,7 @@ a:hover {
 
 .view-tabs {
   display: flex;
-  background: rgba(30, 41, 59, 0.5);
+  background: var(--input-bg);
   padding: 0.25rem;
   border-radius: 0.75rem;
   border: 1px solid var(--border);
@@ -247,7 +270,7 @@ a:hover {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--glass);
   backdrop-filter: blur(8px);
   padding: 0.4rem 0.8rem;
   border-radius: 2rem;
@@ -255,7 +278,8 @@ a:hover {
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.05em;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  color: var(--text-main);
 }
 
 .card-content {
@@ -317,7 +341,7 @@ a:hover {
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-muted);
   width: 2.5rem;
@@ -356,7 +380,7 @@ a:hover {
 }
 
 .modal-content {
-  background: #111827;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 2rem;
   width: 100%;
@@ -365,6 +389,10 @@ a:hover {
   overflow-y: auto;
   position: relative;
   box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme='light'] .modal-content {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 .detail-modal {
@@ -525,8 +553,13 @@ a:hover {
   gap: 1.5rem;
 }
 
-.flex-1 { flex: 1; }
-.flex-2 { flex: 2; }
+.flex-1 {
+  flex: 1;
+}
+
+.flex-2 {
+  flex: 2;
+}
 
 .form-group label {
   display: block;
@@ -540,11 +573,11 @@ a:hover {
 .form-group select,
 .form-group textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 1rem;
-  color: white;
+  color: var(--text-main);
   transition: all 0.3s ease;
 }
 
@@ -629,7 +662,7 @@ a:hover {
 }
 
 .mb-2 {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Utils */
@@ -652,7 +685,9 @@ a:hover {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .no-results {

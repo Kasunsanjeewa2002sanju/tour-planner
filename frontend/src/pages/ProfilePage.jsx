@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProfile, fetchPreferences, updatePreferences } from '../features/users/userSlice';
+import { updateProfile, fetchPreferences, updatePreferences, fetchMe } from '../features/users/userSlice';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { motion } from 'framer-motion';
-import { User, Shield, MapPin, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { User, Car, MapPin } from 'lucide-react';
+import { VEHICLE_TYPES, FUEL_TYPES, VEHICLE_DEFAULTS } from '../features/tour-planning/tourUtils';
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { profile, preferences, loading } = useSelector((state) => state.user);
-  
+
   const [profileData, setProfileData] = useState({
     email: '',
     phone_number: '',
@@ -20,12 +19,17 @@ const ProfilePage = () => {
   });
 
   const [prefData, setPrefData] = useState({
-    default_start_location: '',
+    default_start_location: { address: '', lat: null, lng: null },
     preferred_distance_unit: 'km',
-    current_vehicle_type: 'car'
+    vehicle_type: '',
+    fuel_efficiency: '',
+    fuel_type: ''
   });
 
+  const [vehicleSaved, setVehicleSaved] = useState(false);
+
   useEffect(() => {
+    dispatch(fetchMe());
     dispatch(fetchPreferences());
   }, [dispatch]);
 
@@ -42,16 +46,44 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (preferences) {
+      const loc = preferences.default_start_location;
       setPrefData({
-        default_start_location: preferences.default_start_location || '',
+        default_start_location: typeof loc === 'object' && loc !== null
+          ? { address: loc.address || '', lat: loc.lat || null, lng: loc.lng || null }
+          : { address: loc || '', lat: null, lng: null },
         preferred_distance_unit: preferences.preferred_distance_unit || 'km',
-        current_vehicle_type: preferences.current_vehicle_type || 'car'
+        vehicle_type: preferences.vehicle_type || '',
+        fuel_efficiency: preferences.fuel_efficiency ?? '',
+        fuel_type: preferences.fuel_type || ''
       });
     }
   }, [preferences]);
 
   const onProfileChange = (e) => setProfileData({ ...profileData, [e.target.name]: e.target.value });
-  const onPrefChange = (e) => setPrefData({ ...prefData, [e.target.name]: e.target.value });
+
+  const onVehicleTypeChange = (e) => {
+    const type = e.target.value;
+    const defaults = VEHICLE_DEFAULTS[type];
+    setPrefData({
+      ...prefData,
+      vehicle_type: type,
+      fuel_efficiency: defaults?.fuel_efficiency ?? prefData.fuel_efficiency,
+      fuel_type: defaults?.fuel_type ?? prefData.fuel_type,
+    });
+    setVehicleSaved(false);
+  };
+
+  const onPrefChange = (e) => {
+    setPrefData({ ...prefData, [e.target.name]: e.target.value });
+    setVehicleSaved(false);
+  };
+
+  const onStartLocationChange = (e) => {
+    setPrefData({
+      ...prefData,
+      default_start_location: { ...prefData.default_start_location, address: e.target.value }
+    });
+  };
 
   const onProfileSubmit = (e) => {
     e.preventDefault();
@@ -60,23 +92,34 @@ const ProfilePage = () => {
 
   const onPrefSubmit = (e) => {
     e.preventDefault();
-    dispatch(updatePreferences(prefData));
+    dispatch(updatePreferences({
+      default_start_location: prefData.default_start_location,
+      preferred_distance_unit: prefData.preferred_distance_unit,
+      vehicle_type: prefData.vehicle_type,
+      fuel_efficiency: parseFloat(prefData.fuel_efficiency),
+      fuel_type: prefData.fuel_type,
+    })).then((result) => {
+      if (updatePreferences.fulfilled.match(result)) {
+        setVehicleSaved(true);
+      }
+    });
+  };
+
+  const selectStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    borderRadius: '0.5rem',
+    backgroundColor: '#0f172a',
+    color: '#f8fafc',
+    border: '1px solid #334155'
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <button 
-        onClick={() => navigate('/dashboard')}
-        style={{ background: 'none', border: 'none', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '2rem' }}
-      >
-        <ArrowLeft size={20} /> Back to Dashboard
-      </button>
+    <div className="profile-page">
+      <h1 className="profile-page-title">Account Settings</h1>
 
-      <h1 style={{ marginBottom: '3rem' }}>Account Settings</h1>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '3rem' }}>
-        {/* Profile Info */}
-        <motion.div 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem' }}>
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="glass-card"
@@ -86,7 +129,7 @@ const ProfilePage = () => {
             <User color="#6366f1" />
             <h2 style={{ margin: 0 }}>Personal Information</h2>
           </div>
-          
+
           <form onSubmit={onProfileSubmit}>
             <Input label="Email" name="email" value={profileData.email} onChange={onProfileChange} />
             <Input label="Phone Number" name="phone_number" value={profileData.phone_number} onChange={onProfileChange} />
@@ -96,49 +139,116 @@ const ProfilePage = () => {
           </form>
         </motion.div>
 
-        {/* Preferences */}
-        <motion.div 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card"
+          style={{ maxWidth: '100%' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+            <Car color="#6366f1" />
+            <h2 style={{ margin: 0 }}>Vehicle Profile</h2>
+          </div>
+
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            Required before planning trips. Fuel efficiency is measured in Kilometers per Liter (km/L).
+          </p>
+
+          <form onSubmit={onPrefSubmit}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+                Vehicle Type *
+              </label>
+              <select
+                name="vehicle_type"
+                value={prefData.vehicle_type}
+                onChange={onVehicleTypeChange}
+                required
+                style={selectStyle}
+              >
+                <option value="">Select vehicle type</option>
+                {VEHICLE_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+                Fuel Efficiency (km/L) *
+              </label>
+              <input
+                type="number"
+                name="fuel_efficiency"
+                step="0.1"
+                min="0.1"
+                required
+                value={prefData.fuel_efficiency}
+                onChange={onPrefChange}
+                placeholder="e.g. 12 for car, 40 for bike"
+                style={selectStyle}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>
+                Fuel Type *
+              </label>
+              <select
+                name="fuel_type"
+                value={prefData.fuel_type}
+                onChange={onPrefChange}
+                required
+                style={selectStyle}
+              >
+                <option value="">Select fuel type</option>
+                {FUEL_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <Button type="submit" loading={loading}>Save Vehicle Profile</Button>
+            {vehicleSaved && (
+              <p style={{ color: '#34d399', marginTop: '1rem', fontSize: '0.875rem' }}>
+                Vehicle profile saved successfully.
+              </p>
+            )}
+          </form>
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="glass-card"
           style={{ maxWidth: '100%' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <Shield color="#6366f1" />
-            <h2 style={{ margin: 0 }}>System Preferences</h2>
+            <MapPin color="#6366f1" />
+            <h2 style={{ margin: 0 }}>Trip Preferences</h2>
           </div>
-          
+
           <form onSubmit={onPrefSubmit}>
-            <Input label="Default Start Location" name="default_start_location" value={prefData.default_start_location} onChange={onPrefChange} />
-            
-            <div style={{ marginBottom: '1.25rem' }}>
+            <Input
+              label="Default Start Location"
+              name="default_start_location"
+              value={prefData.default_start_location?.address || ''}
+              onChange={onStartLocationChange}
+            />
+
+            <div style={{ marginBottom: '2rem' }}>
               <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>Distance Unit</label>
-              <select 
-                name="preferred_distance_unit" 
-                value={prefData.preferred_distance_unit} 
+              <select
+                name="preferred_distance_unit"
+                value={prefData.preferred_distance_unit}
                 onChange={onPrefChange}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', backgroundColor: '#0f172a', color: '#f8fafc', border: '1px solid #334155' }}
+                style={selectStyle}
               >
                 <option value="km">Kilometers (km)</option>
                 <option value="miles">Miles (mi)</option>
               </select>
             </div>
 
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>Vehicle Type</label>
-              <select 
-                name="current_vehicle_type" 
-                value={prefData.current_vehicle_type} 
-                onChange={onPrefChange}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', backgroundColor: '#0f172a', color: '#f8fafc', border: '1px solid #334155' }}
-              >
-                <option value="car">Car</option>
-                <option value="motorcycle">Motorcycle</option>
-                <option value="van">Van</option>
-                <option value="truck">Truck</option>
-              </select>
-            </div>
-            
             <Button type="submit" loading={loading} variant="secondary">Update Preferences</Button>
           </form>
         </motion.div>
