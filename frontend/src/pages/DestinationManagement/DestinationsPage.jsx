@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Route } from 'lucide-react';
+import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Route, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,6 +44,11 @@ const DestinationCard = ({ destination, onView, onEdit, onDelete, onBookmark, on
         <div className="card-location">
           <MapPin size={14} />
           <span>{destination.location}</span>
+        </div>
+        <div className="card-stars">
+          {[1,2,3,4,5].map(s => (
+            <Star key={s} size={12} fill={s <= 4 ? '#FFC107' : 'none'} color="#FFC107" className="star" />
+          ))}
         </div>
         <p className="card-description">{destination.description}</p>
         <div className="card-footer">
@@ -492,21 +497,67 @@ const DestinationsPage = () => {
 
   return (
     <div className="destinations-container">
-      <header className="destinations-header">
-        <div className="header-text">
-          <h1>Discover Your Next Adventure</h1>
-          <p>Explore breathtaking places and plan your perfect getaway.</p>
+      <motion.header 
+        className="destinations-premium-header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{
+          background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+          borderRadius: '1.5rem',
+          padding: '2.5rem 3.5rem',
+          marginBottom: '2.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 20px 40px rgba(13, 148, 136, 0.15)'
+        }}
+      >
+        {/* Orbs */}
+        <div style={{ position: 'absolute', top: -40, right: -20, background: 'rgba(255,255,255,0.12)', filter: 'blur(35px)', width: 200, height: 200, borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', bottom: -30, left: 10, background: 'rgba(255,255,255,0.1)', filter: 'blur(25px)', width: 120, height: 120, borderRadius: '50%' }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: '60%' }}>
+          <h1 style={{ fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.75rem', letterSpacing: '-0.02em', color: 'white' }}>
+            Discover Your Next Adventure
+          </h1>
+          <p style={{ fontSize: '1.1rem', opacity: 0.9, lineHeight: 1.6, margin: 0, color: 'white', fontWeight: 500 }}>
+            Explore breathtaking landscapes, historical wonders, and hidden paradises curated just for your soul.
+          </p>
         </div>
-        <div className="search-actions">
-          <div className="search-bar">
-            <Search className="search-icon" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search by destination name or location"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+
+        <motion.img 
+          src="/destinations-header.png" 
+          alt="Explorer" 
+          className="hide-on-mobile"
+          style={{ width: '220px', height: '180px', objectFit: 'contain', position: 'relative', zIndex: 2, filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.15))' }}
+          animate={{ y: [0, -12, 0], rotate: [0, 2, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </motion.header>
+
+      <div className="search-actions-bar" style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="search-bar" style={{ flex: 1, minWidth: '300px', position: 'relative' }}>
+          <Search className="search-icon" size={20} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Search by destination name or location..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ 
+              width: '100%', 
+              padding: '1rem 1rem 1rem 3.5rem', 
+              borderRadius: '1rem', 
+              background: 'var(--bg-card)', 
+              border: '1.5px solid var(--border)', 
+              color: 'var(--text-main)',
+              fontSize: '1rem',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          />
+        </div>
           
           <div className="view-tabs">
             <button 
@@ -524,13 +575,24 @@ const DestinationsPage = () => {
           </div>
 
           {canManage && (
-            <button className="add-btn" onClick={handleOpenAdd}>
+            <button className="add-btn" onClick={handleOpenAdd} style={{ 
+              background: 'var(--primary)', 
+              color: 'white', 
+              padding: '0.75rem 1.5rem', 
+              borderRadius: '0.75rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              fontWeight: 700, 
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(255,107,53,0.2)'
+            }}>
               <Plus size={20} />
-              <span>Add New</span>
+              <span>Add New Destination</span>
             </button>
           )}
         </div>
-      </header>
 
       {loading ? (
         <div className="loading-state">
@@ -555,11 +617,31 @@ const DestinationsPage = () => {
                 />
               ))
             ) : (
-              <div className="no-results">
-                <h3>No destinations found matching "{searchTerm}"</h3>
-                <p>Try searching for a different city or place name.</p>
-              </div>
-            )}
+                <motion.div 
+                  className="no-results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{ 
+                    gridColumn: '1 / -1', 
+                    textAlign: 'center', 
+                    padding: '4rem 2rem', 
+                    background: 'var(--bg-card)', 
+                    borderRadius: '1.5rem', 
+                    border: '1.5px dashed var(--border)',
+                    marginTop: '2rem'
+                  }}
+                >
+                  <motion.img 
+                    src="/no-results.png" 
+                    alt="No Results" 
+                    style={{ width: '200px', marginBottom: '2rem', opacity: 0.7 }}
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  />
+                  <h3 style={{ fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>No destinations found for "{searchTerm}"</h3>
+                  <p style={{ color: 'var(--text-muted)' }}>Try searching for a different city, or clear your search to see all paradises.</p>
+                </motion.div>
+              )}
           </div>
         </AnimatePresence>
       )}

@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile, fetchPreferences, updatePreferences, fetchMe } from '../features/users/userSlice';
+import { toggleTheme } from '../features/theme/themeSlice';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { motion } from 'framer-motion';
-import { User, Car, MapPin } from 'lucide-react';
-import { VEHICLE_TYPES, FUEL_TYPES, VEHICLE_DEFAULTS } from '../features/tour-planning/tourUtils';
+import { User, Car, MapPin, Palette, Sun, Moon } from 'lucide-react';
+import { VEHICLE_TYPES, FUEL_TYPES, VEHICLE_DEFAULTS, reverseGeocode, geocodeAddress, parseCoordinates } from '../features/tour-planning/tourUtils';
+import LocationInput from '../components/tour-planning/LocationInput';
+import MapPicker from '../components/tour-planning/MapPicker';
+import '../styles/layout.css';
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
   const { profile, preferences, loading } = useSelector((state) => state.user);
+  const { mode } = useSelector((state) => state.theme);
 
   const [profileData, setProfileData] = useState({
     email: '',
@@ -27,6 +32,9 @@ const ProfilePage = () => {
   });
 
   const [vehicleSaved, setVehicleSaved] = useState(false);
+  const [mapMode, setMapMode] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [currentText, setCurrentText] = useState('');
 
   useEffect(() => {
     dispatch(fetchMe());
@@ -56,8 +64,39 @@ const ProfilePage = () => {
         fuel_efficiency: preferences.fuel_efficiency ?? '',
         fuel_type: preferences.fuel_type || ''
       });
+      if (typeof loc === 'object' && loc !== null && loc.address) {
+        setCurrentText(loc.address);
+      } else if (typeof loc === 'string') {
+        setCurrentText(loc);
+      }
     }
   }, [preferences]);
+
+  useEffect(() => {
+    if (!currentText.trim()) {
+      setPrefData(prev => ({
+        ...prev,
+        default_start_location: { address: '', lat: null, lng: null }
+      }));
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const coords = parseCoordinates(currentText);
+      const resolved = coords || await geocodeAddress(currentText);
+      if (resolved) {
+        setPrefData(prev => ({
+          ...prev,
+          default_start_location: resolved
+        }));
+      } else {
+        setPrefData(prev => ({
+          ...prev,
+          default_start_location: { ...prev.default_start_location, address: currentText }
+        }));
+      }
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [currentText]);
 
   const onProfileChange = (e) => setProfileData({ ...profileData, [e.target.name]: e.target.value });
 
@@ -78,11 +117,29 @@ const ProfilePage = () => {
     setVehicleSaved(false);
   };
 
-  const onStartLocationChange = (e) => {
-    setPrefData({
-      ...prefData,
-      default_start_location: { ...prefData.default_start_location, address: e.target.value }
-    });
+  const onStartLocationChange = (val) => {
+    setCurrentText(val);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const location = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        setCurrentText(location.address);
+        setPrefData({ ...prefData, default_start_location: location });
+        setGeoLoading(false);
+      },
+      () => setGeoLoading(false),
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const handleMapSelect = (location) => {
+    setCurrentText(location.address);
+    setPrefData({ ...prefData, default_start_location: location });
+    setMapMode(false);
   };
 
   const onProfileSubmit = (e) => {
@@ -229,12 +286,32 @@ const ProfilePage = () => {
           </div>
 
           <form onSubmit={onPrefSubmit}>
-            <Input
-              label="Default Start Location"
-              name="default_start_location"
-              value={prefData.default_start_location?.address || ''}
-              onChange={onStartLocationChange}
-            />
+            <div style={{ marginBottom: '1.25rem' }}>
+              <LocationInput
+                label="Default Start Location"
+                value={currentText}
+                onChange={onStartLocationChange}
+                onSelectOnMap={() => setMapMode('current')}
+                onUseCurrentLocation={handleUseCurrentLocation}
+                loadingGeo={geoLoading}
+                placeholder="Enter address or pick on map"
+              />
+            </div>
+            
+            {mapMode && (
+              <div className="map-mode-panel" style={{ marginBottom: '1.25rem' }}>
+                <div className="map-mode-header">
+                  <span>Click on the map to set your default start location</span>
+                  <button type="button" onClick={() => setMapMode(null)}>Done</button>
+                </div>
+                <MapPicker
+                  center={prefData.default_start_location?.lat ? prefData.default_start_location : { lat: 7.8731, lng: 80.7718 }}
+                  marker={prefData.default_start_location?.lat ? prefData.default_start_location : undefined}
+                  onSelect={handleMapSelect}
+                  height="300px"
+                />
+              </div>
+            )}
 
             <div style={{ marginBottom: '2rem' }}>
               <label style={{ fontSize: '0.875rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>Distance Unit</label>
@@ -252,6 +329,47 @@ const ProfilePage = () => {
             <Button type="submit" loading={loading} variant="secondary">Update Preferences</Button>
           </form>
         </motion.div>
+
+        {/* --- Theme Preferences Card --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card"
+          style={{ maxWidth: '100%', gridColumn: '1 / -1' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+            <Palette color="#FF6B35" />
+            <h2 style={{ margin: 0, color: 'var(--text-main)' }}>App Appearance</h2>
+          </div>
+
+          <div style={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+            padding: '1.5rem', background: 'var(--input-bg)', 
+            borderRadius: '1rem', border: '1px solid var(--border)',
+            flexWrap: 'wrap', gap: '1rem'
+          }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem', color: 'var(--text-main)', fontWeight: 600 }}>Theme Mode</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>Select your preferred theme for the app interface.</p>
+            </div>
+            <button
+              onClick={() => dispatch(toggleTheme())}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.75rem 1.25rem', borderRadius: '0.75rem',
+                border: '1.5px solid var(--border)', background: 'var(--bg-card)',
+                color: 'var(--text-main)', cursor: 'pointer', fontWeight: '600',
+                transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
+              {mode === 'dark' ? <Moon size={18} color="var(--primary)" /> : <Sun size={18} color="var(--primary)" />}
+              {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+            </button>
+          </div>
+        </motion.div>
+
       </div>
     </div>
   );

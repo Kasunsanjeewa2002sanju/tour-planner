@@ -250,17 +250,46 @@ const PlanTourPage = () => {
   if (!vehicleReady) {
     return (
       <div className="plan-tour-page plan-tour-page-in-layout">
-        <div className="plan-tour-container">
-          <div className="vehicle-prompt glass-card">
-            <AlertCircle size={48} color="#f59e0b" />
-            <h2>Complete Your Vehicle Profile</h2>
-            <p>
-              Before planning a trip, please set up your vehicle type, fuel efficiency, and fuel type in your profile.
+        <div className="plan-tour-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
+          <motion.div 
+            className="vehicle-prompt glass-card"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ 
+              textAlign: 'center', 
+              padding: '3rem', 
+              maxWidth: '500px', 
+              borderRadius: '2rem',
+              background: 'var(--bg-card)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.1)'
+            }}
+          >
+            <motion.img 
+              src="/route-planner.png" 
+              alt="Setup Required" 
+              className="hide-on-mobile"
+              style={{ width: '200px', marginBottom: '2rem' }}
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--text-main)' }}>Almost There!</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.6 }}>
+              We need to know your vehicle details to calculate precise fuel costs and distances for your dream journey.
             </p>
-            <Link to="/profile" className="btn-primary plan-profile-link">
-              <Settings size={18} /> Go to Profile Settings
+            <Link to="/profile" className="btn-primary plan-profile-link" style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              padding: '1rem 2rem', 
+              borderRadius: '1rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              background: 'var(--primary)',
+              color: 'white'
+            }}>
+              <Settings size={20} /> Configure Vehicle Profile
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -269,10 +298,45 @@ const PlanTourPage = () => {
   return (
     <div className="plan-tour-page plan-tour-page-in-layout">
       <div className="plan-tour-container">
-        <header className="plan-tour-header">
-          <h1>Plan Your Tour</h1>
-          <p>Calculate route distance and estimated fuel costs for your journey.</p>
-        </header>
+        <motion.header
+          className="plan-tour-premium-header"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'linear-gradient(135deg, #a78bfa 0%, #818cf8 100%)',
+            borderRadius: '1.5rem',
+            padding: '2rem 3.5rem',
+            marginBottom: '2.5rem',
+            boxShadow: '0 16px 40px rgba(129, 140, 248, 0.2)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Decorative blur orbs */}
+          <div style={{ position: 'absolute', top: -60, right: -20, background: 'rgba(255,255,255,0.18)', filter: 'blur(40px)', width: 240, height: 240, borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', bottom: -50, left: 30, background: 'rgba(255,255,255,0.15)', filter: 'blur(30px)', width: 160, height: 160, borderRadius: '50%' }} />
+          
+          <div style={{ position: 'relative', zIndex: 2, color: 'white', maxWidth: '65%' }}>
+            <h1 style={{ fontSize: '2.75rem', fontWeight: 900, marginBottom: '0.75rem', letterSpacing: '-0.02em', color: 'white', lineHeight: 1.1 }}>
+              Plan Your Journey
+            </h1>
+            <p style={{ fontSize: '1.1rem', opacity: 0.9, lineHeight: 1.6, margin: 0, color: 'white', fontWeight: 500 }}>
+              Design your perfect route, calculate fuel costs with precision, and uncover hidden gems along your path.
+            </p>
+          </div>
+          
+          <motion.img
+            src="/route-planner.png"
+            alt="Planning Illustration"
+            className="hide-on-mobile"
+            style={{ width: '220px', height: '180px', objectFit: 'contain', position: 'relative', zIndex: 2, filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.2))' }}
+            animate={{ y: [0, -12, 0], rotate: [-2, 2, -2] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </motion.header>
 
         <div className="plan-tour-layout-container">
           <motion.section
@@ -410,12 +474,37 @@ const PlanTourPage = () => {
                 </div>
               )}
 
-              {currentLocation?.lat && destination?.lat && (
+              {currentLocation?.lat && destination?.lat ? (
                 <RouteAttractionsPanel
                   places={routePlaces}
                   loading={placesLoading}
                   loadingRoute={distanceLoading && routeCoords.length < 2}
                 />
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ 
+                    padding: '3rem', 
+                    textAlign: 'center', 
+                    background: 'var(--bg-card)', 
+                    borderRadius: '1.5rem', 
+                    border: '1.5px dashed var(--border)',
+                    marginTop: '2rem'
+                  }}
+                >
+                  <motion.img 
+                    src="/trip-summary.png" 
+                    alt="Start planning" 
+                    style={{ width: '180px', opacity: 0.6, marginBottom: '1.5rem' }}
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 6, repeat: Infinity }}
+                  />
+                  <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>Awaiting Your Route</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    Enter a starting point and destination to see your professional trip summary and nearby attractions.
+                  </p>
+                </motion.div>
               )}
             </div>
           </motion.section>
