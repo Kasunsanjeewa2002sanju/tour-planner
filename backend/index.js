@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./UserManagement/routes/auth');
 const userRoutes = require('./UserManagement/routes/users');
 const adminRoutes = require('./UserManagement/routes/admin');
+const { loadContext } = require('./AIAssistant/chatService');
 
 dotenv.config();
 
@@ -15,7 +16,11 @@ const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => {
+        console.log('Connected to MongoDB');
+        // Initializing AI context after DB connection
+        loadContext();
+    })
     .catch(err => console.error('Could not connect to MongoDB', err));
 
 app.use(cors());
@@ -28,6 +33,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/destinations', require('./DestinationManagement/routes/destinations'));
 app.use('/api/fuel', require('./TourManagement/routes/fuel'));
 app.use('/api/vehicles', require('./TourManagement/routes/vehicles'));
+app.use('/api/chat', require('./AIAssistant/routes/chat'));
 
 // Service static files (images)
 const path = require('path');
