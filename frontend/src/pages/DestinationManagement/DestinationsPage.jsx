@@ -3,8 +3,19 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MapPin, Edit2, Trash2, X, Upload, Heart, Route, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { fetchDestinations, addDestination, updateDestination, deleteDestination, toggleBookmark, fetchSavedDestinations } from '../../features/destination-management/destinationSlice';
 import { useShuffledList } from '../../hooks/useShuffledList';
+
+// Fix for Leaflet default icon issues in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
 
 const SHUFFLE_INTERVAL_MS = 60000;
 
@@ -150,9 +161,28 @@ const DestinationDetail = ({ destination, onClose, onEdit, onDelete, onPlanTrip,
           <h1 className="detail-title">{destination.name}</h1>
           <p className="detail-description">{destination.description}</p>
 
-          <div className="map-preview">
-            <MapPin size={32} />
-            <p>Interactive Map Preview for {destination.name}</p>
+          <div className="map-preview-container">
+            {destination.coordinates?.lat && destination.coordinates?.lng ? (
+              <MapContainer 
+                center={[destination.coordinates.lat, destination.coordinates.lng]} 
+                zoom={13} 
+                style={{ height: '300px', width: '100%', borderRadius: '1.5rem' }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[destination.coordinates.lat, destination.coordinates.lng]}>
+                  <Popup>{destination.name}</Popup>
+                </Marker>
+              </MapContainer>
+            ) : (
+              <div className="map-preview-empty">
+                <MapPin size={32} />
+                <p>Location coordinates not available for {destination.name}</p>
+              </div>
+            )}
           </div>
 
           {showPlanTrip && (

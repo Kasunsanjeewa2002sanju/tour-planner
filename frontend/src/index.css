@@ -922,6 +922,33 @@ input, button, select, textarea {
   outline: none;
 }
 
+.map-preview-container {
+  margin: 1.5rem 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.map-preview-empty {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  items-center: center;
+  justify-content: center;
+  gap: 1rem;
+  background: var(--input-bg);
+  color: var(--text-muted);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  padding: 2rem;
+}
+
+.map-preview-empty p {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
